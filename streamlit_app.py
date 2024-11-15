@@ -2,7 +2,7 @@ import streamlit as st
 import pyspiel as sp
 import torch
 import random  # Ensure this is imported
-from DQN import DQN, Heuristics, BargainingDQN
+from DQN import DQN, Heuristics, BargainingDQN, HeuristicAgent  # Import the new HeuristicAgent class from DQN.py
 
 # Load pre-trained DQN model
 @st.cache(allow_output_mutation=True)
@@ -46,14 +46,25 @@ if "agent_type" not in st.session_state:
     st.session_state["agent_type"] = None
 if "game_over" not in st.session_state:
     st.session_state["game_over"] = False
+if "agent_instance" not in st.session_state:
+    st.session_state["agent_instance"] = None
 
 # User selects the agent type
-agent_choice = st.selectbox("Choose the agent to negotiate with:", ["DQN Model", "Heuristic Agent"])
+agent_choice = st.selectbox("Choose the agent to negotiate with:", ["DQN Model", "Heuristic Agent", "Advanced Heuristic Agent"])
 if st.button("Start Game"):
     st.session_state["agent_type"] = agent_choice
     st.session_state["state"] = game.new_initial_state()
     st.session_state["state"].apply_action(random.randint(0, 9))  # Reset chance node
     st.session_state["game_over"] = False
+
+    # Initialize the appropriate agent instance
+    if agent_choice == "Advanced Heuristic Agent":
+        st.session_state["agent_instance"] = HeuristicAgent()  # Use the new advanced heuristic agent
+    elif agent_choice == "Heuristic Agent":
+        st.session_state["agent_instance"] = Heuristics()  # Use the basic heuristic agent
+    else:
+        st.session_state["agent_instance"] = BargainingDQN()  # DQN Model
+
     st.experimental_rerun()
 
 # Load the DQN model if selected
@@ -83,16 +94,18 @@ def human_action(state):
 
 # Define agent action
 def agent_action(state):
+    agent_instance = st.session_state["agent_instance"]
     if st.session_state["agent_type"] == "DQN Model":
         action = bargaining_dqn.state_to_action(state, game, model=1)
     elif st.session_state["agent_type"] == "Heuristic Agent":
-        heuristics_agent = Heuristics()
-        action = heuristics_agent.valueAgent(state)
+        action = agent_instance.valueAgent(state)  # Basic heuristic agent
+    elif st.session_state["agent_type"] == "Advanced Heuristic Agent":
+        agent_instance.set_state(state)  # Set the state for the advanced heuristic agent
+        action = agent_instance.calc_action()  # Get action from advanced heuristic agent
     else:
         action = None  # This should never happen
     print(f"Agent selected action: {action}")
     return action
-
 
 # Play the game
 if not st.session_state["state"].is_terminal() and not st.session_state["game_over"]:
@@ -122,3 +135,4 @@ else:
     st.write(f"Player 0 reward: {rewards[0]}")
     st.write(f"Player 1 reward: {rewards[1]}")
     st.session_state["game_over"] = True
+
