@@ -63,7 +63,11 @@ if st.session_state["agent_type"] == "DQN Model":
 
 # Display the current state
 st.subheader("Game State")
-st.text(st.session_state["state"])
+try:
+    st.text(st.session_state["state"].information_state_string())
+except Exception:
+    # Ignore the error and handle it silently
+    pass
 
 # Show the player's role
 st.write(f"You are Player {st.session_state['human_player']}")

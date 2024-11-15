@@ -42,21 +42,6 @@ def play(game, player_actions):
     print(f"Final state:\n{state}")
     print(f"Player0 reward: {state.rewards()[0]} \nPlayer1 reward: {state.rewards()[1]}")
 
-class RandomAgent:
-    """
-    A random agent that selects actions randomly from the legal actions.
-    """
-    def __init__(self):
-        self.state = None
-
-    def set_state(self, state):
-        self.state = state
-
-    def get_state(self):
-        return self.state
-    
-    def calc_action(self):
-        return self.state.legal_actions()[random.randint(0, len(self.state.legal_actions()) - 1)]
 
 
 class HumanAgent:
